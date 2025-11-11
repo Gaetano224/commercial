@@ -108,45 +108,35 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({ message, isBot
   
 
   return (
-    <div className={`flex items-start gap-3 ${isUser ? 'justify-end pl-8 sm:pl-10' : 'pr-8 sm:pr-10'}`}>
+    <div className={`flex items-start gap-3 animate-fade-in ${isUser ? 'justify-end' : ''}`}>
       {!isUser && (
-        <div className={`flex-shrink-0 w-8 h-8 rounded-full p-1.5 flex items-center justify-center mt-0.5 shadow-sm ${showTypingIndicator ? 'bg-[#949494] animate-pulse' : 'bg-[#0A2A4A] text-white'}`}>
-           <ActualBotIcon className="w-5 h-5" /> 
+        <div className={`flex-shrink-0 w-8 h-8 rounded-full p-1.5 flex items-center justify-center mt-0.5 ${showTypingIndicator ? 'bg-gray-300 animate-pulse' : 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'} shadow-sm`}>
+          <ActualBotIcon className="w-5 h-5" />
         </div>
       )}
-      
-      <div 
-        className={`
-          flex flex-col 
-          ${isUser 
-            ? 'items-end w-auto max-w-[calc(100%-3.5rem)] sm:max-w-[calc(100%-4rem)]' 
-            : 'items-start w-auto max-w-full sm:max-w-[85%] md:max-w-[75%] lg:max-w-[70%] xl:max-w-3xl'
-          }
-        `}
-      >
-        <div 
-          className={`
-            px-3.5 py-2.5 shadow-lg w-full
-            ${isUser 
-              ? 'bg-[#0A2A4A] text-white rounded-l-xl rounded-t-xl' 
-              : 'bg-white text-[#070707] border border-[#E2E1E0]/80 rounded-r-xl rounded-t-xl'
-            }
-          `}
+
+      <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start flex-1'} gap-2`}>
+        <div
+          className={`px-4 py-3 rounded-lg shadow-sm ${
+            isUser
+              ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-none'
+              : 'bg-gray-50 text-gray-900 border border-gray-200 rounded-bl-none'
+          }`}
           style={{ overflowWrap: 'break-word', wordBreak: 'break-word', hyphens: 'auto' }}
         >
           {showTypingIndicator ? (
-            <div className="flex items-center space-x-1 py-1">
-              <div className="w-1.5 h-1.5 bg-current rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-              <div className="w-1.5 h-1.5 bg-current rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+            <div className="flex items-center gap-1.5 py-1">
               <div className="w-1.5 h-1.5 bg-current rounded-full animate-bounce"></div>
+              <div className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.15s' }}></div>
+              <div className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></div>
             </div>
           ) : (
-            <div className="prose prose-sm max-w-none prose-p:my-1.5 prose-li:my-0.5 prose-ul:my-1.5 prose-ol:my-1.5 text-inherit">
+            <div className="prose prose-sm max-w-none prose-p:my-1 prose-li:my-0.5 prose-ul:my-1 prose-ol:my-1 text-inherit">
               {isUser && message.attachments && message.attachments.length > 0 && (
-                <div className="not-prose mb-2.5 space-y-1.5">
+                <div className="not-prose mb-2 space-y-1">
                   {message.attachments.map((attachment, index) => (
-                    <div key={index} className="flex items-center gap-2.5 p-2 bg-white/10 rounded-lg text-xs border border-white/20 shadow-inner">
-                      <PaperClipIcon className="w-4 h-4 flex-shrink-0 text-white/80" />
+                    <div key={index} className="flex items-center gap-2 p-2 bg-white/20 rounded text-xs border border-white/30">
+                      <PaperClipIcon className="w-4 h-4 flex-shrink-0" />
                       <span className="truncate font-medium" title={attachment.fileName}>
                         {attachment.fileName}
                       </span>
@@ -155,67 +145,64 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({ message, isBot
                 </div>
               )}
               {contentToRender.map((part, index) => (
-                typeof part === 'string'
-                  ? <ReactMarkdown key={`md-${index}`} remarkPlugins={[remarkGfm]}>{part}</ReactMarkdown>
-                  : part
+                typeof part === 'string' ? (
+                  <ReactMarkdown key={`md-${index}`} remarkPlugins={[remarkGfm]}>
+                    {part}
+                  </ReactMarkdown>
+                ) : (
+                  part
+                )
               ))}
             </div>
           )}
         </div>
-        
+
         {!isUser && message.summary && (
-          <div className="mt-2.5 w-full bg-[#E2E1E0]/50 border-l-4 border-[#0A2A4A] p-3 rounded-md shadow">
-            <h4 className="text-xs font-semibold text-[#0A2A4A] mb-1.5">Riepilogo Schematizzato:</h4>
-            <div className="prose prose-sm max-w-none prose-p:my-1 prose-li:my-0.25 prose-ul:my-1 prose-ol:my-1 text-[#070707]">
+          <div className="w-full max-w-2xl bg-blue-50 border-l-4 border-blue-500 p-3 rounded-md shadow-sm">
+            <h4 className="text-xs font-semibold text-blue-900 mb-2">Riepilogo:</h4>
+            <div className="prose prose-sm max-w-none prose-p:my-1 prose-li:my-0.5 prose-ul:my-1 prose-ol:my-1 text-gray-700">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.summary}</ReactMarkdown>
             </div>
           </div>
         )}
 
-        <div className="mt-2.5 flex items-center gap-2">
-            {showSummarizeButton && (
-               <button
-                onClick={handleSummarizeClick}
-                disabled={summarizeButtonDisabled}
-                className="flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 px-3 rounded-md transition-colors
-                           bg-white border border-[#0A2A4A]/50 text-[#0A2A4A] hover:bg-[#0A2A4A]/10
-                           disabled:bg-[#E2E1E0]/70 disabled:text-[#949494] disabled:border-[#949494]/30 disabled:cursor-not-allowed
-                           focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0A2A4A]"
-                aria-label={summarizeButtonText}
-              >
-                <ListBulletIcon className="w-3.5 h-3.5" />
-                {summarizeButtonText}
-              </button>
-            )}
-        </div>
-        
+        {showSummarizeButton && (
+          <button
+            onClick={handleSummarizeClick}
+            disabled={summarizeButtonDisabled}
+            className="text-xs font-medium py-1.5 px-3 rounded-md transition-all bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+            aria-label={summarizeButtonText}
+          >
+            <ListBulletIcon className="w-3.5 h-3.5" />
+            {summarizeButtonText}
+          </button>
+        )}
+
         {!isUser && message.downloadablePdfs && message.downloadablePdfs.length > 0 && (
           <DownloadablePdfs pdfs={message.downloadablePdfs} />
         )}
-        
-        {!isUser && (
-          <div className="mt-2 w-full text-left space-y-1">
+
+        {!isUser && (message.sources && message.sources.length > 0 || true) && (
+          <div className="w-full text-left space-y-1">
             {message.sources && message.sources.length > 0 && (
               <SourcesAccordion sources={message.sources} />
             )}
-            <p className="text-xs px-1 text-[#949494]">
+            <p className="text-xs text-gray-400">
               {formatDate(message.timestamp)}
             </p>
           </div>
         )}
 
         {isUser && (
-          <div className="mt-1.5 w-full text-right">
-            <p className="text-xs px-1 text-white/70">
-              {formatDate(message.timestamp)}
-            </p>
-          </div>
+          <p className="text-xs text-blue-200">
+            {formatDate(message.timestamp)}
+          </p>
         )}
       </div>
 
       {isUser && (
-        <div className="flex-shrink-0 w-8 h-8 bg-[#0A2A4A] text-white rounded-full p-1.5 flex items-center justify-center mt-0.5 shadow-sm">
-            <UserIcon className="w-5 h-5" />
+        <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full p-1.5 flex items-center justify-center mt-0.5 shadow-sm">
+          <UserIcon className="w-5 h-5" />
         </div>
       )}
     </div>

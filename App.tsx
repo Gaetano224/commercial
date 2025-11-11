@@ -8,8 +8,9 @@ import { DEFAULT_PROMPTS, MULTI_CHAT_SESSIONS_LOCAL_STORAGE_KEY, GEMINI_MODEL_NA
 import { createChatSession, sendMessageToGeminiStream, getSummaryFromGemini } from './services/geminiService';
 import { parseFile, ACCEPTED_EXTENSIONS_STRING } from './services/fileParser';
 import { GoogleGenAI, Chat } from '@google/genai';
-import { ChevronRightIcon, PlusCircleIcon, PaperClipIcon, XCircleIcon } from './components/icons';
+import { ChevronRightIcon, PlusCircleIcon, PaperClipIcon, XCircleIcon, MenuIcon } from './components/icons';
 import { extractPdfLinks } from './utils/textProcessing';
+import './styles/global.css';
 
 const convertChatMessagesToGeminiHistory = (chatMessages: ChatMessage[]): Content[] => {
   return chatMessages
@@ -562,39 +563,36 @@ const App: React.FC = () => {
   
   const AttachmentsPreview = () => {
     if (attachments.length === 0) return null;
-  
+
     return (
-      <div className="px-3 sm:px-4 py-2 border-t border-b border-[#E2E1E0] bg-[#E2E1E0]/40">
-        <div className="space-y-2 max-h-32 overflow-y-auto pr-1">
+      <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
+        <div className="max-w-4xl mx-auto space-y-2 max-h-32 overflow-y-auto">
           {attachments.map(att => (
-            <div key={att.id} className="bg-white/80 backdrop-blur-sm p-2.5 rounded-lg border border-[#949494]/50 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center min-w-0">
-                  <PaperClipIcon className="w-5 h-5 mr-2.5 text-[#4E5B6F] flex-shrink-0" />
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-sm font-medium text-[#070707] truncate" title={att.fileName}>
-                      {att.fileName}
-                    </span>
-                    {(att.status === 'parsing' || att.status === 'ocr') && !att.statusMessage && <span className="text-xs text-[#4E5B6F]">In elaborazione...</span>}
-                    {att.status === 'error' && <span className="text-xs text-[#EF270A] truncate" title={att.error}>{att.error}</span>}
-                  </div>
+            <div key={att.id} className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex items-center justify-between hover:border-gray-300 transition-colors">
+              <div className="flex items-center min-w-0 gap-2.5">
+                <PaperClipIcon className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate" title={att.fileName}>
+                    {att.fileName}
+                  </p>
+                  {(att.status === 'parsing' || att.status === 'ocr') && !att.statusMessage && (
+                    <p className="text-xs text-gray-500">Processing...</p>
+                  )}
+                  {att.status === 'error' && (
+                    <p className="text-xs text-red-600 truncate" title={att.error}>{att.error}</p>
+                  )}
+                  {att.status === 'ready' && (
+                    <p className="text-xs text-green-600">Ready</p>
+                  )}
                 </div>
-                <button
-                  onClick={() => handleRemoveAttachment(att.id)}
-                  className="p-1 rounded-full hover:bg-black/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EF270A] ml-2 flex-shrink-0"
-                  aria-label={`Rimuovi file ${att.fileName}`}
-                >
-                  <XCircleIcon className="w-5 h-5 text-[#949494] hover:text-[#EF270A]" />
-                </button>
               </div>
-              {att.status === 'ocr' && (
-                <div className="mt-1.5">
-                  <span className="text-xs text-[#4E5B6F]">{att.statusMessage || 'Analisi OCR in corso...'}</span>
-                  <div className="w-full bg-[#949494]/30 rounded-full h-1 mt-1">
-                    <div className="bg-[#0A2A4A] h-1 rounded-full transition-all duration-300" style={{ width: `${att.ocrProgress || 0}%` }}></div>
-                  </div>
-                </div>
-              )}
+              <button
+                onClick={() => handleRemoveAttachment(att.id)}
+                className="p-1.5 hover:bg-red-100 rounded-lg transition-colors flex-shrink-0"
+                aria-label={`Remove file ${att.fileName}`}
+              >
+                <XCircleIcon className="w-5 h-5 text-gray-400 hover:text-red-500" />
+              </button>
             </div>
           ))}
         </div>
@@ -605,108 +603,129 @@ const App: React.FC = () => {
   const isProcessingFile = attachments.some(a => a.status === 'parsing' || a.status === 'ocr');
 
   return (
-    <div className="flex h-screen max-h-screen overflow-hidden relative"> 
+    <div className="flex h-screen max-h-screen overflow-hidden bg-white">
       <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept={ACCEPTED_EXTENSIONS_STRING}
-            style={{ display: 'none' }}
-            id="app-file-input"
-            multiple
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept={ACCEPTED_EXTENSIONS_STRING}
+        style={{ display: 'none' }}
+        id="app-file-input"
+        multiple
+      />
+
+      {isSidebarOpen && (
+        <div className="hidden md:block flex-shrink-0 w-80 overflow-hidden">
+          <Sidebar
+            chatSessions={filteredChatSessions.sort((a, b) => new Date(b.lastModifiedAt).getTime() - new Date(a.lastModifiedAt).getTime())}
+            activeChatSessionId={activeChatSessionId}
+            onCreateNewChat={handleCreateNewChat}
+            onSelectChat={handleSelectChat}
+            onDeleteChat={handleDeleteChat}
+            onRenameChat={handleRenameChat}
+            onPromptSelect={handlePredefinedPromptSelect}
+            predefinedPrompts={DEFAULT_PROMPTS}
+            attachments={attachments}
+            onSelectFile={triggerFileSelect}
+            onClearAllFiles={handleClearAllAttachments}
+            isStreaming={isStreaming}
+            isInitializing={isInitializing}
+            onToggleSidebar={toggleSidebar}
+            searchQuery={searchQuery}
+            onSearchQueryChange={setSearchQuery}
+          />
+        </div>
+      )}
+
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 md:hidden z-40"
+          onClick={toggleSidebar}
         />
-      <div className={`
-        h-full
-        transition-all duration-300 ease-in-out
-        flex-shrink-0
-        ${isSidebarOpen ? 'w-80' : 'w-0'}
-        overflow-hidden
-      `}>
-        <Sidebar
-          chatSessions={filteredChatSessions.sort((a,b) => new Date(b.lastModifiedAt).getTime() - new Date(a.lastModifiedAt).getTime())} // Keep sidebar sorted by recent
-          activeChatSessionId={activeChatSessionId}
-          onCreateNewChat={handleCreateNewChat}
-          onSelectChat={handleSelectChat}
-          onDeleteChat={handleDeleteChat}
-          onRenameChat={handleRenameChat}
-          onPromptSelect={handlePredefinedPromptSelect} 
-          predefinedPrompts={DEFAULT_PROMPTS}
-          attachments={attachments}
-          onSelectFile={triggerFileSelect}
-          onClearAllFiles={handleClearAllAttachments}
-          isStreaming={isStreaming}
-          isInitializing={isInitializing}
+      )}
+
+      {isSidebarOpen && (
+        <div className="fixed left-0 top-0 h-full w-80 z-50 md:hidden overflow-hidden">
+          <Sidebar
+            chatSessions={filteredChatSessions.sort((a, b) => new Date(b.lastModifiedAt).getTime() - new Date(a.lastModifiedAt).getTime())}
+            activeChatSessionId={activeChatSessionId}
+            onCreateNewChat={handleCreateNewChat}
+            onSelectChat={handleSelectChat}
+            onDeleteChat={handleDeleteChat}
+            onRenameChat={handleRenameChat}
+            onPromptSelect={handlePredefinedPromptSelect}
+            predefinedPrompts={DEFAULT_PROMPTS}
+            attachments={attachments}
+            onSelectFile={triggerFileSelect}
+            onClearAllFiles={handleClearAllAttachments}
+            isStreaming={isStreaming}
+            isInitializing={isInitializing}
+            onToggleSidebar={toggleSidebar}
+            searchQuery={searchQuery}
+            onSearchQueryChange={setSearchQuery}
+          />
+        </div>
+      )}
+
+      <div className="flex-1 flex flex-col max-h-screen bg-white overflow-hidden">
+        <ChatHeader
+          isSidebarOpen={isSidebarOpen}
           onToggleSidebar={toggleSidebar}
-          searchQuery={searchQuery}
-          onSearchQueryChange={setSearchQuery}
+          chatTitle={activeSessionTitle}
         />
-      </div>
-      
-      <div className="flex-grow flex flex-col max-h-screen bg-white shadow-xl">
-        <ChatHeader 
-            isSidebarOpen={isSidebarOpen} 
-            onToggleSidebar={toggleSidebar} 
-            chatTitle={activeSessionTitle}
-        />
-        {error && !isInitializing && ( 
-          <div className="p-3 bg-white border-b border-[#EF270A]/60 text-[#EF270A] text-sm text-center shadow-sm">
-            <p className="font-medium">Si è verificato un errore:</p>
-            <p>{error}</p>
+
+        {error && !isInitializing && (
+          <div className="px-4 py-3 bg-red-50 border-b border-red-200 text-red-700 text-sm">
+            <div className="max-w-4xl mx-auto">
+              <p className="font-semibold">Error</p>
+              <p className="text-sm">{error}</p>
+            </div>
           </div>
         )}
-        {isInitializing && activeMessages.length === 0 && ( 
-           <div className="flex-grow flex flex-col items-center justify-center text-[#444444] p-6">
-             <svg className="w-12 h-12 animate-spin text-[#0A2A4A] mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+
+        {isInitializing && activeMessages.length === 0 && (
+          <div className="flex-1 flex flex-col items-center justify-center text-gray-500 p-6">
+            <div className="w-12 h-12 animate-spin text-blue-500 mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-             <p className="text-lg">Inizializzazione dell'assistente AI...</p>
-             <p className="text-sm">Attendere prego.</p>
-           </div>
-        )}
-        {!isInitializing && activeMessages.length === 0 && !activeChatSessionId && (
-            <div className="flex-grow flex flex-col items-center justify-center text-[#444444] p-6">
-                <PlusCircleIcon className="w-16 h-16 text-[#0A2A4A]/70 mb-4" />
-                <p className="text-lg font-medium">Nessuna chat selezionata</p>
-                <p className="text-sm">Crea una nuova chat o selezionane una dalla barra laterale.</p>
-                <button 
-                    onClick={handleCreateNewChat} 
-                    className="mt-4 bg-[#0A2A4A] text-white py-2 px-4 rounded-lg hover:bg-[#08223F] transition-colors text-sm"
-                >
-                    Inizia una Nuova Chat
-                </button>
             </div>
+            <p className="text-lg font-medium">Initializing AI Assistant...</p>
+            <p className="text-sm">Please wait.</p>
+          </div>
         )}
-        <MessageList 
-            messages={activeMessages} 
-            streamingBotMessageId={currentBotMessageRef.current?.id}
-            onSummarize={handleSummarizeMessage}
-        />
-        <AttachmentsPreview />
-        <MessageInput 
-            onSendMessage={(message) => handleSendMessage(message)} 
-            onAttachFile={triggerFileSelect}
-            disabled={!chatSessionRef.current || !activeChatSessionId || isStreaming || isInitializing || isProcessingFile} 
-        />
+
+        {!isInitializing && activeMessages.length === 0 && !activeChatSessionId && (
+          <div className="flex-1 flex flex-col items-center justify-center text-gray-500 p-6">
+            <PlusCircleIcon className="w-16 h-16 text-gray-300 mb-4" />
+            <p className="text-lg font-semibold text-gray-700">No chat selected</p>
+            <p className="text-sm mb-6">Start a new conversation to begin</p>
+            <button
+              onClick={handleCreateNewChat}
+              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-2 px-6 rounded-lg transition-all shadow-sm"
+            >
+              Start New Chat
+            </button>
+          </div>
+        )}
+
+        {activeMessages.length > 0 && (
+          <>
+            <MessageList
+              messages={activeMessages}
+              streamingBotMessageId={currentBotMessageRef.current?.id}
+              onSummarize={handleSummarizeMessage}
+            />
+            <AttachmentsPreview />
+            <MessageInput
+              onSendMessage={(message) => handleSendMessage(message)}
+              onAttachFile={triggerFileSelect}
+              disabled={!chatSessionRef.current || !activeChatSessionId || isStreaming || isInitializing || isProcessingFile}
+            />
+          </>
+        )}
       </div>
-
-      <button
-        onClick={toggleSidebar}
-        aria-label={isSidebarOpen ? "Chiudi menu laterale" : "Apri menu laterale"}
-        className={`
-          fixed top-3.5 left-0 z-30 p-2 bg-[#0A2A4A] text-white rounded-r-md shadow-lg
-          hover:bg-[#08223F]
-          transition-all duration-300 ease-in-out
-          focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#4E5B6F] focus-visible:ring-offset-[#E2E1E0]
-          ${isSidebarOpen 
-            ? 'opacity-0 -translate-x-full pointer-events-none' 
-            : 'opacity-100 translate-x-1 pointer-events-auto' 
-          }
-        `}
-      >
-        <ChevronRightIcon className="w-6 h-6" />
-      </button>
-
     </div>
   );
 };

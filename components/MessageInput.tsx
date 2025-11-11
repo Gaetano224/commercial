@@ -27,32 +27,36 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onAtt
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-3 sm:p-4 border-t border-[#E2E1E0] bg-white sticky bottom-0 z-10">
-      <div className="flex items-end bg-white border border-[#949494]/80 rounded-xl p-1 focus-within:ring-2 focus-within:ring-[#0A2A4A] focus-within:border-[#0A2A4A] shadow-sm">
+    <form onSubmit={handleSubmit} className="p-4 border-t border-gray-200 bg-white sticky bottom-0 z-10">
+      <div className="max-w-4xl mx-auto flex items-end gap-3 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all">
         <button
           type="button"
           onClick={onAttachFile}
           disabled={disabled}
-          className="p-2.5 text-[#4E5B6F] hover:text-[#0A2A4A] rounded-lg disabled:text-[#949494] disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#0A2A4A]"
+          className="flex-shrink-0 p-2 text-gray-500 hover:text-gray-700 disabled:text-gray-300 disabled:cursor-not-allowed rounded-lg transition-colors hover:bg-white"
           aria-label="Allega file"
+          title="Allega documento"
         >
           <PaperClipIcon className="w-5 h-5" />
         </button>
+
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Scrivi un messaggio..."
-          className="flex-grow p-2.5 bg-transparent border-none focus:ring-0 resize-none text-sm text-[#070707] placeholder-[#949494] min-h-[2.75em] max-h-40"
+          placeholder="Scrivi un messaggio... (Shift+Enter per nuova riga)"
+          className="flex-grow bg-transparent border-none focus:ring-0 resize-none text-sm text-gray-900 placeholder-gray-400 min-h-[2.5rem] max-h-40 font-medium"
           rows={1}
           disabled={disabled}
           aria-label="Messaggio da inviare"
         />
+
         <button
           type="submit"
           disabled={!input.trim() || disabled}
-          className="ml-2 p-2.5 bg-[#0A2A4A] hover:bg-[#08223F] text-white rounded-lg disabled:bg-[#0A2A4A]/50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#0A2A4A]"
+          className="flex-shrink-0 p-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-sm active:scale-95"
           aria-label="Invia messaggio"
+          title="Invia (Enter)"
         >
           <PaperAirplaneIcon className="w-5 h-5" />
         </button>

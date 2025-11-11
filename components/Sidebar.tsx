@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FileUpload } from './FileUpload';
 import { PredefinedPrompts } from './PredefinedPrompts';
+import { ChatSessionItem } from './ChatSessionItem';
 import { ChatSession, PredefinedPrompt, Attachment } from '../types';
-import { PlusCircleIcon, TrashIcon, ChatBubbleLeftEllipsisIcon, MagnifyingGlassIcon, PencilIcon } from './icons';
+import { PlusCircleIcon, MagnifyingGlassIcon, XMarkIcon } from './icons';
 import { AccordionSection } from './AccordionSection';
 
 interface SidebarProps {
@@ -81,122 +82,63 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
 
   return (
-    <div className="w-80 bg-white p-5 h-full flex flex-col overflow-hidden">
-      {/* Chat History Section */}
-      <div className="flex-grow flex flex-col min-h-0">
-        <div className="flex justify-between items-center mb-1">
-            <h2 className="text-sm font-semibold text-[#444444] uppercase tracking-wider">Cronologia Chat</h2>
-            <button
-                onClick={onCreateNewChat}
-                disabled={globalDisabled}
-                className="flex items-center gap-1.5 text-xs bg-[#0A2A4A] hover:bg-[#08223F] text-white font-semibold py-1.5 px-2.5 rounded-lg transition-colors disabled:bg-[#0A2A4A]/50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-[#0A2A4A] focus-visible:ring-offset-1"
-                title="Crea una nuova chat"
-            >
-                <PlusCircleIcon className="w-4 h-4" />
-                Nuova
-            </button>
+    <aside className="w-80 bg-white h-full flex flex-col border-r border-gray-200 shadow-sm">
+      <div className="flex-1 flex flex-col overflow-hidden p-4">
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <h2 className="text-sm font-semibold text-gray-900">Chat History</h2>
+          <button
+            onClick={onCreateNewChat}
+            disabled={globalDisabled}
+            className="flex items-center gap-1.5 text-xs bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium py-1.5 px-2.5 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+            title="Crea una nuova chat"
+            aria-label="Nuova chat"
+          >
+            <PlusCircleIcon className="w-4 h-4" />
+            <span className="hidden sm:inline">New</span>
+          </button>
         </div>
-        
-        <div className="relative my-2">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-            <MagnifyingGlassIcon className="w-4 h-4 text-[#949494]" />
-          </span>
+
+        <div className="relative mb-3">
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Cerca nelle chat..."
+            placeholder="Search chats..."
             value={searchQuery}
             onChange={(e) => onSearchQueryChange(e.target.value)}
-            className="w-full rounded-lg border border-[#E2E1E0]/80 bg-white py-2 pl-9 pr-3 text-sm text-[#070707] placeholder-[#949494] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0A2A4A] focus:border-transparent"
-            aria-label="Cerca nelle chat"
+            className="w-full pl-9 pr-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            aria-label="Search chats"
           />
         </div>
 
-        <div className="flex-grow overflow-y-auto space-y-1.5 pr-0.5 pb-1">
+        <div className="flex-1 overflow-y-auto space-y-2 pr-1">
           {chatSessions.length === 0 && !isInitializing && (
-            <p className="text-xs text-[#949494] text-center py-2">
-              {searchQuery ? 'Nessuna chat trovata.' : 'Nessuna chat precedente. Inizia una nuova conversazione!'}
+            <p className="text-xs text-gray-500 text-center py-4">
+              {searchQuery ? 'No chats found.' : 'Start a new conversation'}
             </p>
           )}
           {chatSessions.map((session) => (
-            <div
+            <ChatSessionItem
               key={session.id}
-              onClick={() => renamingSessionId !== session.id && onSelectChat(session.id)}
-              className={`
-                group flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-all
-                text-xs font-medium
-                ${session.id === activeChatSessionId 
-                  ? 'bg-[#0A2A4A] text-white shadow-md' 
-                  : 'bg-white hover:bg-[#E2E1E0]/70 border border-[#E2E1E0]/80 text-[#070707] hover:border-[#949494]'}
-                focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A2A4A]
-              `}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelectChat(session.id); }}
-              aria-current={session.id === activeChatSessionId ? "page" : undefined}
-            >
-              <div className="flex items-center flex-grow min-w-0 mr-2">
-                <ChatBubbleLeftEllipsisIcon className={`w-4 h-4 mr-2 flex-shrink-0 ${session.id === activeChatSessionId ? 'text-white' : 'text-[#4E5B6F]'}`} />
-                {renamingSessionId === session.id ? (
-                  <input
-                    ref={renameInputRef}
-                    type="text"
-                    value={tempChatTitle}
-                    onChange={(e) => setTempChatTitle(e.target.value)}
-                    onBlur={handleConfirmRename}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') { e.preventDefault(); handleConfirmRename(); }
-                      if (e.key === 'Escape') handleCancelRename();
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="w-full text-xs font-medium bg-white border border-[#0A2A4A] rounded-md px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-[#0A2A4A] text-[#070707]"
-                  />
-                ) : (
-                  <span className="truncate flex-grow" title={session.title} onDoubleClick={() => handleStartRename(session)}>
-                    {session.title}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center flex-shrink-0">
-                {renamingSessionId !== session.id && (
-                  <>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleStartRename(session); }}
-                      className={`p-1 rounded-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 disabled:opacity-30 disabled:cursor-not-allowed
-                        ${session.id === activeChatSessionId 
-                          ? 'text-white/70 hover:text-white hover:bg-white/20' 
-                          : 'text-[#949494] hover:text-[#0A2A4A] hover:bg-[#0A2A4A]/10'}`}
-                      aria-label={`Rinomina chat "${session.title}"`}
-                      title="Rinomina chat"
-                      disabled={globalDisabled}
-                    >
-                      <PencilIcon className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={(e) => onDeleteChat(session.id, e)}
-                      disabled={globalDisabled}
-                      className={`ml-1 p-1 rounded-md transition-colors opacity-50 group-hover:opacity-100
-                                ${session.id === activeChatSessionId 
-                                  ? 'text-white/70 hover:text-white hover:bg-white/20' 
-                                  : 'text-[#949494] hover:text-[#EF270A] hover:bg-[#EF270A]/10'}
-                                disabled:opacity-30 disabled:cursor-not-allowed`}
-                      aria-label={`Elimina chat "${session.title}"`}
-                      title="Elimina chat"
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
+              session={session}
+              isActive={session.id === activeChatSessionId}
+              isRenaming={renamingSessionId === session.id}
+              renamingTitle={tempChatTitle}
+              onSelect={onSelectChat}
+              onDelete={onDeleteChat}
+              onStartRename={handleStartRename}
+              onConfirmRename={handleConfirmRename}
+              onCancelRename={handleCancelRename}
+              onTitleChange={setTempChatTitle}
+              disabled={globalDisabled}
+            />
           ))}
         </div>
       </div>
-      
-      {/* Collapsible sections container */}
-      <div className="flex-shrink-0 pt-2 border-t border-[#E2E1E0]/80">
-        <AccordionSection 
-          title="Allega Documento"
-          isOpen={isFileUploadOpen} 
+
+      <div className="flex-shrink-0 border-t border-gray-200 p-4 space-y-3">
+        <AccordionSection
+          title="Upload Document"
+          isOpen={isFileUploadOpen}
           onToggle={() => setIsFileUploadOpen(!isFileUploadOpen)}
         >
           <FileUpload
@@ -206,10 +148,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             disabled={globalDisabled}
           />
         </AccordionSection>
-        
-        <AccordionSection 
-          title="Domande Rapide" 
-          isOpen={isPromptsOpen} 
+
+        <AccordionSection
+          title="Quick Questions"
+          isOpen={isPromptsOpen}
           onToggle={() => setIsPromptsOpen(!isPromptsOpen)}
         >
           <PredefinedPrompts
@@ -220,10 +162,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           />
         </AccordionSection>
       </div>
-      
-      <div className="mt-auto pt-4">
-        <p className="text-xs text-[#949494] text-center">Assistente AI per Commercialisti v1.5</p>
+
+      <div className="flex-shrink-0 px-4 py-3 border-t border-gray-200 text-center">
+        <p className="text-xs text-gray-500">Assistente AI v2.0</p>
       </div>
-    </div>
+    </aside>
   );
 };
